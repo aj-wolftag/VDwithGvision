@@ -3,10 +3,13 @@ from google.cloud import vision
 import numpy as np
 import time
 import os, io
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
-
 import random
 import sys
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+os.environ['GOOGLE_APPLICATION_CREDENTIALS']= r'numberpltdetect-22f08617ae63.json'
+
+client = vision.ImageAnnotatorClient()
+
 
 
 # Load Yolo
@@ -127,7 +130,7 @@ while True:
                 if(vehiCy<lineCy+2 and vehiCy>lineCy-2):
 
                     count = count+1
-                    path = '/home/aj/Documents/ViolDetectwithANPR/save_img'
+                    path = '/home/aj/Documents/PyVem/VDwithGvision/save_img'
                     roi = frame[y:y+h, x:x+w]
                     cv2.imwrite(os.path.join(path,'vehicle_'+label+'_'+str(count)+'.jpg'),roi)
                     #cv2.line(frame,(0,height-200),(width,height-200),(0,0,255),2)
@@ -135,7 +138,18 @@ while True:
                     print("Vehicle Type: "+label)
                     
                     #ANPR BEGIN----------------------------------------------------------------------------
-                    
+                    try:
+                        with io.open(os.path.join(path,'vehicle_'+label+'_'+str(count)+'.jpg'),'rb') as image_file:
+                            content = image_file.read()
+
+                        image = vision.Image(content=content)
+                        response = client.text_detection(image=image)
+                        texts = response.text_annotations
+                        print('Number-Plate: ')
+                        for text in texts:
+                            print('\n"{}"'.format(text.description))
+                    except:
+                        print(response.error.message)
                     #ANPR END------------------------------------------------------------------------------
 
                     #recoding video
